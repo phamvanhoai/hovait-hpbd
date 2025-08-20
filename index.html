@@ -1,0 +1,841 @@
+	<!DOCTYPE html>
+	<html lang="vi">
+	<head>
+	    <meta charset="UTF-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <title>Bí Mật Sinh Nhật: Nhiệm Vụ Giải Mã</title>
+	    <style>
+	        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime&family=Dancing+Script:wght@700&display=swap');
+	        * {
+	            margin: 0;
+	            padding: 0;
+	            box-sizing: border-box;
+	        }
+	        body {
+	            font-family: 'Courier Prime', monospace;
+	            background: #0a0a0a;
+	            color: #00ff00;
+	            overflow: hidden;
+	            height: 100vh;
+	            position: relative;
+	        }
+	        .terminal {
+	            position: absolute;
+	            top: 0;
+	            left: 0;
+	            width: 100%;
+	            height: 100%;
+	            background: rgba(0, 0, 0, 0.95);
+	            display: flex;
+	            flex-direction: column;
+	            padding: 20px;
+	            z-index: 100;
+	            opacity: 1;
+	            transition: opacity 2s ease;
+	        }
+	        .terminal.hidden {
+	            opacity: 0;
+	            pointer-events: none;
+	        }
+	        .terminal-header {
+	            color: #00ff00;
+	            margin-bottom: 20px;
+	            font-size: 1.2rem;
+	            display: flex;
+	            justify-content: space-between;
+	        }
+	        .terminal-content {
+	            flex: 1;
+	            overflow-y: auto;
+	            font-size: 1rem;
+	            line-height: 1.6;
+	        }
+	        .terminal-line {
+	            margin-bottom: 10px;
+	            opacity: 0;
+	            animation: typeIn 0.5s forwards;
+	        }
+	        @keyframes typeIn {
+	            to { opacity: 1; }
+	        }
+	        .terminal-input {
+	            display: flex;
+	            align-items: center;
+	            margin-top: 20px;
+	        }
+	        .terminal-prompt {
+	            color: #00ff00;
+	            margin-right: 10px;
+	        }
+	        .terminal-field {
+	            background: transparent;
+	            border: none;
+	            color: #00ff00;
+	            font-family: inherit;
+	            font-size: 1rem;
+	            outline: none;
+	            flex: 1;
+	        }
+	        .terminal-cursor {
+	            display: inline-block;
+	            width: 10px;
+	            height: 20px;
+	            background: #00ff00;
+	            animation: blink 1s infinite;
+	        }
+	        @keyframes blink {
+	            0%, 49% { opacity: 1; }
+	            50%, 100% { opacity: 0; }
+	        }
+	        .warning {
+	            color: #ff4d4d;
+	            animation: blink 0.5s infinite;
+	        }
+	        .countdown {
+	            color: #ff9900;
+	            font-weight: bold;
+	        }
+	        .main-container {
+	            position: relative;
+	            width: 100%;
+	            height: 100vh;
+	            display: none;
+	            justify-content: center;
+	            align-items: center;
+	            z-index: 50;
+	        }
+	        .main-container.active {
+	            display: flex;
+	        }
+	        .safe-room {
+	            width: 90%;
+	            max-width: 800px;
+	            height: 500px;
+	            background: linear-gradient(135deg, #1a1a2e, #16213e);
+	            border-radius: 15px;
+	            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+	            position: relative;
+	            overflow: hidden;
+	            border: 2px solid #0f3460;
+	        }
+	        .safe-header {
+	            background: #0f3460;
+	            padding: 15px;
+	            text-align: center;
+	            color: #00ff00;
+	            font-size: 1.5rem;
+	            position: relative;
+	        }
+	        .safe-status {
+	            position: absolute;
+	            right: 15px;
+	            top: 50%;
+	            transform: translateY(-50%);
+	            display: flex;
+	            align-items: center;
+	        }
+	        .status-light {
+	            width: 12px;
+	            height: 12px;
+	            border-radius: 50%;
+	            background: #ff3333;
+	            margin-left: 8px;
+	            animation: pulse 1.5s infinite;
+	        }
+	        .status-light.active {
+	            background: #00ff00;
+	        }
+	        @keyframes pulse {
+	            0%, 100% { opacity: 1; }
+	            50% { opacity: 0.5; }
+	        }
+	        .safe-body {
+	            padding: 30px;
+	            height: calc(100% - 60px);
+	            display: flex;
+	            flex-direction: column;
+	            align-items: center;
+	            justify-content: center;
+	        }
+	        .envelope-container {
+	            position: relative;
+	            width: 350px;
+	            height: 200px;
+	            margin-bottom: 30px;
+	            cursor: pointer;
+	            transform-style: preserve-3d;
+	            transition: transform 1s ease;
+	        }
+	        .envelope-container:hover {
+	            transform: rotateY(10deg);
+	        }
+	        .envelope {
+	            position: absolute;
+	            width: 100%;
+	            height: 100%;
+	            background: linear-gradient(135deg, #2a2a4e, #1a1a3e);
+	            border-radius: 8px;
+	            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+	            display: flex;
+	            justify-content: center;
+	            align-items: center;
+	            overflow: hidden;
+	        }
+	        .envelope-lock {
+	            position: absolute;
+	            width: 60px;
+	            height: 60px;
+	            background: radial-gradient(circle, #e94560, #c23652);
+	            border-radius: 50%;
+	            top: 50%;
+	            left: 50%;
+	            transform: translate(-50%, -50%);
+	            box-shadow: 0 0 20px rgba(233, 69, 96, 0.7);
+	            z-index: 3;
+	            display: flex;
+	            justify-content: center;
+	            align-items: center;
+	            font-size: 1.8rem;
+	            color: white;
+	            transition: all 0.5s ease;
+	        }
+	        .envelope-lock.broken {
+	            transform: translate(-50%, -50%) scale(0);
+	            opacity: 0;
+	        }
+	        .laser-grid {
+	            position: absolute;
+	            top: 0;
+	            left: 0;
+	            width: 100%;
+	            height: 100%;
+	            pointer-events: none;
+	            z-index: 2;
+	        }
+	        .laser-beam {
+	            position: absolute;
+	            height: 2px;
+	            background: linear-gradient(90deg, transparent, #ff0000, transparent);
+	            box-shadow: 0 0 10px #ff0000;
+	            opacity: 0.7;
+	        }
+	        .safe-instructions {
+	            text-align: center;
+	            color: #00ff00;
+	            margin-bottom: 20px;
+	            font-size: 1.1rem;
+	            max-width: 600px;
+	        }
+	        .safe-timer {
+	            font-size: 1.5rem;
+	            color: #ff9900;
+	            margin-bottom: 20px;
+	            font-weight: bold;
+	        }
+	        .keypad-container {
+	            display: none;
+	            flex-direction: column;
+	            align-items: center;
+	            margin-top: 20px;
+	        }
+	        .keypad-container.active {
+	            display: flex;
+	        }
+	        .keypad {
+	            display: grid;
+	            grid-template-columns: repeat(3, 1fr);
+	            gap: 10px;
+	            margin-bottom: 20px;
+	        }
+	        .key {
+	            width: 60px;
+	            height: 60px;
+	            background: #0f3460;
+	            border: 2px solid #16213e;
+	            border-radius: 8px;
+	            display: flex;
+	            justify-content: center;
+	            align-items: center;
+	            font-size: 1.5rem;
+	            color: #00ff00;
+	            cursor: pointer;
+	            transition: all 0.2s ease;
+	        }
+	        .key:hover {
+	            background: #16213e;
+	            transform: scale(1.05);
+	        }
+	        .key:active {
+	            transform: scale(0.95);
+	        }
+	        .keypad-display {
+	            width: 200px;
+	            height: 40px;
+	            background: #0a0a0a;
+	            border: 2px solid #0f3460;
+	            border-radius: 5px;
+	            margin-bottom: 15px;
+	            display: flex;
+	            justify-content: center;
+	            align-items: center;
+	            font-size: 1.5rem;
+	            color: #00ff00;
+	            letter-spacing: 5px;
+	        }
+	        .keypad-message {
+	            color: #ff4d4d;
+	            margin-top: 10px;
+	            min-height: 20px;
+	        }
+	        .morse-container {
+	            display: none;
+	            flex-direction: column;
+	            align-items: center;
+	            margin-top: 30px;
+	            background: rgba(15, 52, 96, 0.3);
+	            padding: 20px;
+	            border-radius: 10px;
+	            border: 1px solid #0f3460;
+	        }
+	        .morse-container.active {
+	            display: flex;
+	            animation: fadeIn 1s ease;
+	        }
+	        @keyframes fadeIn {
+	            from { opacity: 0; transform: translateY(20px); }
+	            to { opacity: 1; transform: translateY(0); }
+	        }
+	        .morse-title {
+	            color: #00ff00;
+	            font-size: 1.3rem;
+	            margin-bottom: 15px;
+	        }
+	        .morse-display {
+	            width: 300px;
+	            height: 50px;
+	            background: #0a0a0a;
+	            border: 2px solid #0f3460;
+	            border-radius: 5px;
+	            margin-bottom: 15px;
+	            display: flex;
+	            justify-content: center;
+	            align-items: center;
+	            font-size: 1.2rem;
+	            color: #00ff00;
+	        }
+	        .morse-input {
+	            width: 300px;
+	            height: 40px;
+	            background: #0a0a0a;
+	            border: 2px solid #0f3460;
+	            border-radius: 5px;
+	            margin-bottom: 15px;
+	            padding: 0 10px;
+	            color: #00ff00;
+	            font-family: inherit;
+	            font-size: 1rem;
+	        }
+	        .morse-button {
+	            background: #0f3460;
+	            border: none;
+	            color: #00ff00;
+	            padding: 10px 20px;
+	            border-radius: 5px;
+	            cursor: pointer;
+	            font-family: inherit;
+	            font-size: 1rem;
+	            transition: all 0.2s ease;
+	        }
+	        .morse-button:hover {
+	            background: #16213e;
+	        }
+	        .final-container {
+	            position: absolute;
+	            top: 0;
+	            left: 0;
+	            width: 100%;
+	            height: 100%;
+	            background: radial-gradient(circle, #0f3460, #0a0a0a);
+	            display: none;
+	            justify-content: center;
+	            align-items: center;
+	            z-index: 200;
+	            overflow: hidden;
+	        }
+	        .final-container.active {
+	            display: flex;
+	        }
+	        .final-message {
+	            text-align: center;
+	            z-index: 2;
+	            max-width: 800px;
+	            padding: 40px;
+	            background: rgba(0, 0, 0, 0.7);
+	            border-radius: 15px;
+	            border: 2px solid #0f3460;
+	        }
+	        .final-title {
+	            font-family: 'Dancing Script', cursive;
+	            font-size: 4rem;
+	            color: #e94560;
+	            margin-bottom: 30px;
+	            animation: pulse 2s infinite alternate;
+	        }
+	        @keyframes pulse {
+	            from { transform: scale(1); }
+	            to { transform: scale(1.05); }
+	        }
+	        .final-content {
+	            font-size: 1.5rem;
+	            color: #f5f5f5;
+	            line-height: 1.8;
+	            margin-bottom: 30px;
+	        }
+	        .final-surprise {
+	            font-size: 1.2rem;
+	            color: #00ff00;
+	            margin-top: 20px;
+	            padding: 15px;
+	            background: rgba(0, 255, 0, 0.1);
+	            border-radius: 8px;
+	            border: 1px solid #00ff00;
+	        }
+	        .firework {
+	            position: absolute;
+	            width: 5px;
+	            height: 5px;
+	            border-radius: 50%;
+	            box-shadow: 0 0 10px currentColor;
+	        }
+	        .matrix-bg {
+	            position: fixed;
+	            top: 0;
+	            left: 0;
+	            width: 100%;
+	            height: 100%;
+	            z-index: -1;
+	            opacity: 0.1;
+	        }
+	        .alarm {
+	            position: fixed;
+	            top: 0;
+	            left: 0;
+	            width: 100%;
+	            height: 5px;
+	            background: linear-gradient(90deg, #ff3333, #ff9900, #ff3333);
+	            background-size: 200% 100%;
+	            animation: alarmPulse 1s infinite;
+	            z-index: 150;
+	            display: none;
+	        }
+	        .alarm.active {
+	            display: block;
+	        }
+	        @keyframes alarmPulse {
+	            0% { background-position: 0% 50%; }
+	            100% { background-position: 200% 50%; }
+	        }
+	        .hint {
+	            position: absolute;
+	            bottom: 20px;
+	            left: 50%;
+	            transform: translateX(-50%);
+	            color: rgba(255, 255, 255, 0.5);
+	            font-size: 0.9rem;
+	            animation: blink 2s infinite;
+	        }
+	        .secret-message {
+	            position: absolute;
+	            top: 50%;
+	            left: 50%;
+	            transform: translate(-50%, -50%);
+	            color: rgba(0, 255, 0, 0.05);
+	            font-size: 10rem;
+	            font-weight: bold;
+	            user-select: none;
+	            pointer-events: none;
+	            z-index: 1;
+	        }
+	        .progress-indicator {
+	            display: flex;
+	            justify-content: center;
+	            margin-bottom: 20px;
+	        }
+	        .progress-step {
+	            width: 30px;
+	            height: 30px;
+	            border-radius: 50%;
+	            background: #0f3460;
+	            border: 2px solid #16213e;
+	            margin: 0 10px;
+	            display: flex;
+	            justify-content: center;
+	            align-items: center;
+	            color: #00ff00;
+	            font-weight: bold;
+	        }
+	        .progress-step.completed {
+	            background: #00ff00;
+	            color: #0a0a0a;
+	        }
+	        .progress-step.active {
+	            box-shadow: 0 0 10px #00ff00;
+	        }
+	    </style>
+	</head>
+	<body>
+	    <canvas class="matrix-bg" id="matrix"></canvas>
+	    <div class="alarm" id="alarm"></div>
+	    <div class="terminal" id="terminal">
+	        <div class="terminal-header">
+	            HỆ THỐNG BÍ MẬT SINH NHẬT v2.0
+	            <div class="terminal-status">
+	                <span>BẢO VỆ: </span>
+	                <span class="status-light"></span>
+	            </div>
+	        </div>
+	        <div class="terminal-content" id="terminalContent">
+	            <div class="terminal-line">Đang khởi động hệ thống bảo mật cấp cao...</div>
+	            <div class="terminal-line">Kiểm tra lớp bảo vệ 1: Mật khẩu truy cập...</div>
+	            <div class="terminal-line">Kiểm tra lớp bảo vệ 2: Xác thực sinh trắc học...</div>
+	            <div class="terminal-line">Kiểm tra lớp bảo vệ 3: Giải mã tín hiệu...</div>
+	            <div class="terminal-line">Cảnh báo: Thông điệp được bảo vệ bằng 3 lớp mã hóa</div>
+	            <div class="terminal-line">Thời gian truy cập còn hạn: <span class="countdown" id="countdown">05:00</span></div>
+	            <div class="terminal-line">Vui lòng nhập mật khẩu cấp 1 để tiếp tục...</div>
+	        </div>
+	        <div class="terminal-input">
+	            <span class="terminal-prompt">$</span>
+	            <input type="password" class="terminal-field" id="passwordInput" autofocus>
+	            <span class="terminal-cursor"></span>
+	        </div>
+	    </div>
+	    <div class="main-container" id="mainContainer">
+	        <div class="safe-room">
+	            <div class="safe-header">
+	                PHÒNG BẢO VỆ THÔNG ĐIỆP
+	                <div class="safe-status">
+	                    <span>TRẠNG THÁI: </span>
+	                    <span class="status-light" id="safeStatus"></span>
+	                </div>
+	            </div>
+	            <div class="safe-body">
+	                <div class="progress-indicator">
+	                    <div class="progress-step active" id="step1">1</div>
+	                    <div class="progress-step" id="step2">2</div>
+	                    <div class="progress-step" id="step3">3</div>
+	                </div>
+	                <div class="safe-timer" id="safeTimer">Thời gian còn lại: 04:30</div>
+	                <div class="safe-instructions">
+	                    Thông điệp sinh nhật được bảo vệ trong phòng an toàn.<br>
+	                    Bạn cần vượt qua 3 lớp bảo vệ để mở khóa thông điệp.<br>
+	                    <span class="warning">Cảnh báo: Hệ thống an ninh sẽ kích hoạt nếu bạn nhập sai quá 3 lần!</span>
+	                </div>
+	                <div class="envelope-container" id="envelopeContainer">
+	                    <div class="envelope">
+	                        <div class="envelope-lock" id="envelopeLock">🔒</div>
+	                        <div class="laser-grid" id="laserGrid"></div>
+	                    </div>
+	                </div>
+	                <div class="keypad-container" id="keypadContainer">
+	                    <div class="keypad-display" id="keypadDisplay">_ _ _ _</div>
+	                    <div class="keypad">
+	                        <div class="key" data-value="1">1</div>
+	                        <div class="key" data-value="2">2</div>
+	                        <div class="key" data-value="3">3</div>
+	                        <div class="key" data-value="4">4</div>
+	                        <div class="key" data-value="5">5</div>
+	                        <div class="key" data-value="6">6</div>
+	                        <div class="key" data-value="7">7</div>
+	                        <div class="key" data-value="8">8</div>
+	                        <div class="key" data-value="9">9</div>
+	                        <div class="key" data-value="0">0</div>
+	                    </div>
+	                    <div class="keypad-message" id="keypadMessage">Nhập mã 4 chữ số để mở khóa lớp bảo vệ 2</div>
+	                </div>
+	                <div class="morse-container" id="morseContainer">
+	                    <div class="morse-title">Lớp bảo vệ 3: Giải mã Morse</div>
+	                    <div class="morse-display" id="morseDisplay">.... . .-.. .-.. ---</div>
+	                    <input type="text" class="morse-input" id="morseInput" placeholder="Nhập bản giải mã">
+	                    <button class="morse-button" id="morseButton">Giải mã</button>
+	                    <div class="keypad-message" id="morseMessage"></div>
+	                </div>
+	                <div class="hint" id="hint">Nhấp vào ổ khóa để bắt đầu</div>
+	            </div>
+	        </div>
+	    </div>
+	    <div class="final-container" id="finalContainer">
+	        <div class="final-message">
+	            <h1 class="final-title">Chúc Mừng Sinh Nhật!</h1>
+	            <p class="final-content">
+	                Chúc mừng! Bạn đã vượt qua tất cả các lớp bảo vệ và giải mã thành công thông điệp bí mật!<br>
+	                Chúc bạn một ngày sinh nhật thật đặc biệt, tràn ngập niềm vui và hạnh phúc.<br>
+	                Mong rằng tất cả ước mơ của bạn sẽ thành hiện thực!
+	            </p>
+	            <div class="final-surprise">
+	                🎁 Bất ngờ đặc biệt: Bạn đã mở khóa thông điệp ẩn! 🎁<br>
+	                "Hãy luôn giữ vững niềm đam mê và không ngừng khám phá những điều mới mẻ!"
+	            </div>
+	        </div>
+	        <div class="secret-message">BÍ MẬT</div>
+	    </div>
+	    <script>
+	        // Matrix background
+	        const canvas = document.getElementById('matrix');
+	        const ctx = canvas.getContext('2d');
+	        canvas.width = window.innerWidth;
+	        canvas.height = window.innerHeight;
+	        const matrix = "ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789@#$%^&*()*&^%+-/~{[|`]}";
+	        const matrixArray = matrix.split("");
+	        const fontSize = 10;
+	        const columns = canvas.width / fontSize;
+	        const drops = [];
+	        for(let x = 0; x < columns; x++) {
+	            drops[x] = 1;
+	        }
+	        function drawMatrix() {
+	            ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
+	            ctx.fillRect(0, 0, canvas.width, canvas.height);
+	            ctx.fillStyle = '#0F0';
+	            ctx.font = fontSize + 'px monospace';
+	            for(let i = 0; i < drops.length; i++) {
+	                const text = matrixArray[Math.floor(Math.random() * matrixArray.length)];
+	                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+	                if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+	                    drops[i] = 0;
+	                }
+	                drops[i]++;
+	            }
+	        }
+	        setInterval(drawMatrix, 35);
+	        // Terminal countdown
+	        let timeLeft = 300; // 5 minutes in seconds
+	        const countdownElement = document.getElementById('countdown');
+	        const countdownInterval = setInterval(() => {
+	            timeLeft--;
+	            const minutes = Math.floor(timeLeft / 60);
+	            const seconds = timeLeft % 60;
+	            countdownElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	            if (timeLeft <= 0) {
+	                clearInterval(countdownInterval);
+	                countdownElement.textContent = "HẾT THỜI GIAN";
+	                countdownElement.classList.add('warning');
+	            }
+	        }, 1000);
+	        // Terminal password
+	        const passwordInput = document.getElementById('passwordInput');
+	        const terminal = document.getElementById('terminal');
+	        const mainContainer = document.getElementById('mainContainer');
+	        const terminalContent = document.getElementById('terminalContent');
+	        let attempts = 0;
+	        passwordInput.addEventListener('keypress', function(e) {
+	            if(e.key === 'Enter') {
+	                const password = this.value;
+	                const line = document.createElement('div');
+	                line.className = 'terminal-line';
+	                line.textContent = `$ ${'*'.repeat(password.length)}`;
+	                terminalContent.appendChild(line);
+	                if(password.toLowerCase() === 'sinhnhat') {
+	                    const successLine = document.createElement('div');
+	                    successLine.className = 'terminal-line';
+	                    successLine.textContent = 'Mật khẩu đúng! Đang mở khóa thông điệp...';
+	                    terminalContent.appendChild(successLine);
+	                    setTimeout(() => {
+	                        terminal.classList.add('hidden');
+	                        mainContainer.classList.add('active');
+	                        initSafeRoom();
+	                    }, 2000);
+	                } else {
+	                    attempts++;
+	                    const errorLine = document.createElement('div');
+	                    errorLine.className = 'terminal-line warning';
+	                    errorLine.textContent = `Mật khẩu sai! Số lần thử còn lại: ${3 - attempts}`;
+	                    terminalContent.appendChild(errorLine);
+	                    this.value = '';
+	                    terminalContent.scrollTop = terminalContent.scrollHeight;
+	                    if(attempts >= 3) {
+	                        const lockLine = document.createElement('div');
+	                        lockLine.className = 'terminal-line warning';
+	                        lockLine.textContent = 'QUÁ SỐ LẦN THỬ! HỆ THỐNG ĐÃ BỊ KHÓA!';
+	                        terminalContent.appendChild(lockLine);
+	                        this.disabled = true;
+	                    }
+	                }
+	            }
+	        });
+	        // Safe Room
+	        let safeTimeLeft = 270; // 4:30 in seconds
+	        const safeTimerElement = document.getElementById('safeTimer');
+	        const safeStatusElement = document.getElementById('safeStatus');
+	        const alarmElement = document.getElementById('alarm');
+	        let safeAttempts = 0;
+	        let currentLevel = 1;
+	        function initSafeRoom() {
+	            // Create laser grid
+	            const laserGrid = document.getElementById('laserGrid');
+	            for(let i = 0; i < 5; i++) {
+	                const laser = document.createElement('div');
+	                laser.className = 'laser-beam';
+	                laser.style.width = Math.random() * 80 + 20 + '%';
+	                laser.style.top = Math.random() * 100 + '%';
+	                laser.style.left = Math.random() * 100 + '%';
+	                laser.style.transform = `rotate(${Math.random() * 360}deg)`;
+	                laserGrid.appendChild(laser);
+	            }
+	            // Start safe room countdown
+	            const safeCountdownInterval = setInterval(() => {
+	                safeTimeLeft--;
+	                const minutes = Math.floor(safeTimeLeft / 60);
+	                const seconds = safeTimeLeft % 60;
+	                safeTimerElement.textContent = `Thời gian còn lại: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	                if (safeTimeLeft <= 0) {
+	                    clearInterval(safeCountdownInterval);
+	                    safeTimerElement.textContent = "HẾT THỜI GIAN";
+	                    safeTimerElement.classList.add('warning');
+	                    alarmElement.classList.add('active');
+	                }
+	            }, 1000);
+	            // Envelope lock interaction
+	            const envelopeLock = document.getElementById('envelopeLock');
+	            const keypadContainer = document.getElementById('keypadContainer');
+	            const hint = document.getElementById('hint');
+	            envelopeLock.addEventListener('click', function() {
+	                if(currentLevel === 1) {
+	                    this.classList.add('broken');
+	                    keypadContainer.classList.add('active');
+	                    currentLevel = 2;
+	                    hint.textContent = "Nhập mã 4 chữ số để tiếp tục";
+	                    // Update progress indicator
+	                    document.getElementById('step1').classList.add('completed');
+	                    document.getElementById('step1').classList.remove('active');
+	                    document.getElementById('step2').classList.add('active');
+	                }
+	            });
+	            // Keypad interaction
+	            const keypadDisplay = document.getElementById('keypadDisplay');
+	            const keypadMessage = document.getElementById('keypadMessage');
+	            const keys = document.querySelectorAll('.key');
+	            const morseContainer = document.getElementById('morseContainer');
+	            let keypadCode = '';
+	            keys.forEach(key => {
+	                key.addEventListener('click', function() {
+	                    if(keypadCode.length < 4) {
+	                        const value = this.getAttribute('data-value');
+	                        keypadCode += value;
+	                        let displayText = '';
+	                        for(let i = 0; i < 4; i++) {
+	                            displayText += i < keypadCode.length ? keypadCode[i] + ' ' : '_ ';
+	                        }
+	                        keypadDisplay.textContent = displayText;
+	                        if(keypadCode.length === 4) {
+	                            setTimeout(() => {
+	                                if(keypadCode === '2025') {
+	                                    keypadMessage.textContent = 'Mã đúng! Lớp bảo vệ 2 đã được mở khóa!';
+	                                    keypadMessage.style.color = '#00ff00';
+	                                    // Update progress indicator
+	                                    document.getElementById('step2').classList.add('completed');
+	                                    document.getElementById('step2').classList.remove('active');
+	                                    document.getElementById('step3').classList.add('active');
+	                                    setTimeout(() => {
+	                                        // Hide keypad and show morse
+	                                        keypadContainer.classList.remove('active');
+	                                        morseContainer.classList.add('active');
+	                                        hint.textContent = "Giải mã mã Morse để tiếp tục";
+	                                        currentLevel = 3;
+	                                    }, 2000);
+	                                } else {
+	                                    safeAttempts++;
+	                                    keypadMessage.textContent = `Mã sai! Số lần thử còn lại: ${3 - safeAttempts}`;
+	                                    keypadMessage.style.color = '#ff4d4d';
+	                                    setTimeout(() => {
+	                                        keypadCode = '';
+	                                        keypadDisplay.textContent = '_ _ _ _ ';
+	                                    }, 1500);
+	                                    if(safeAttempts >= 3) {
+	                                        keypadMessage.textContent = 'QUÁ SỐ LẦN THỬ! HỆ THỐNG AN NINH ĐÃ KÍCH HOẠT!';
+	                                        alarmElement.classList.add('active');
+	                                        safeStatusElement.classList.add('active');
+	                                    }
+	                                }
+	                            }, 500);
+	                        }
+	                    }
+	                });
+	            });
+	            // Morse code interaction
+	            const morseInput = document.getElementById('morseInput');
+	            const morseButton = document.getElementById('morseButton');
+	            const morseMessage = document.getElementById('morseMessage');
+	            const finalContainer = document.getElementById('finalContainer');
+	            morseButton.addEventListener('click', function() {
+	                const morseAnswer = morseInput.value.toLowerCase();
+	                if(morseAnswer === 'hello' || morseAnswer === 'xin chào') {
+	                    morseMessage.textContent = 'Chính xác! Tất cả các lớp bảo vệ đã được mở khóa!';
+	                    morseMessage.style.color = '#00ff00';
+	                    safeStatusElement.classList.add('active');
+	                    // Update progress indicator
+	                    document.getElementById('step3').classList.add('completed');
+	                    document.getElementById('step3').classList.remove('active');
+	                    setTimeout(() => {
+	                        finalContainer.classList.add('active');
+	                        createFireworks();
+	                    }, 2000);
+	                } else {
+	                    safeAttempts++;
+	                    morseMessage.textContent = `Sai! Số lần thử còn lại: ${3 - safeAttempts}`;
+	                    morseMessage.style.color = '#ff4d4d';
+	                    if(safeAttempts >= 3) {
+	                        morseMessage.textContent = 'QUÁ SỐ LẦN THỬ! HỆ THỐNG AN NINH ĐÃ KÍCH HOẠT!';
+	                        alarmElement.classList.add('active');
+	                        safeStatusElement.classList.add('active');
+	                    }
+	                }
+	            });
+	        }
+	        // Fireworks
+	        function createFireworks() {
+	            const colors = ['#ff5252', '#448aff', '#ffab40', '#66bb6a', '#ab47bc', '#ec407a'];
+	            for(let i = 0; i < 100; i++) {
+	                setTimeout(() => {
+	                    const firework = document.createElement('div');
+	                    firework.className = 'firework';
+	                    const x = Math.random() * window.innerWidth;
+	                    const y = Math.random() * window.innerHeight;
+	                    const color = colors[Math.floor(Math.random() * colors.length)];
+	                    firework.style.left = x + 'px';
+	                    firework.style.top = y + 'px';
+	                    firework.style.color = color;
+	                    const size = Math.random() * 5 + 2;
+	                    firework.style.width = size + 'px';
+	                    firework.style.height = size + 'px';
+	                    finalContainer.appendChild(firework);
+	                    const angle = Math.random() * Math.PI * 2;
+	                    const velocity = Math.random() * 100 + 50;
+	                    const lifetime = Math.random() * 1000 + 1000;
+	                    let posX = x;
+	                    let posY = y;
+	                    let opacity = 1;
+	                    const animate = () => {
+	                        posX += Math.cos(angle) * velocity * 0.02;
+	                        posY += Math.sin(angle) * velocity * 0.02;
+	                        opacity -= 0.01;
+	                        firework.style.left = posX + 'px';
+	                        firework.style.top = posY + 'px';
+	                        firework.style.opacity = opacity;
+	                        if(opacity > 0) {
+	                            requestAnimationFrame(animate);
+	                        } else {
+	                            firework.remove();
+	                        }
+	                    };
+	                    requestAnimationFrame(animate);
+	                }, i * 30);
+	            }
+	        }
+	        // Window resize
+	        window.addEventListener('resize', () => {
+	            canvas.width = window.innerWidth;
+	            canvas.height = window.innerHeight;
+	        });
+	    </script>
+	</body>
+	</html>
